@@ -35,7 +35,7 @@ Methodology follows Solanko L. "Where do Russia's mobilized soldiers come from? 
 
 ### Military fatalities (Mediazona)
 
-Independently verified list of Russian military deaths in Ukraine, attributed to home regions. Source: https://mediazona.io
+Independently verified list of Russian military deaths in Ukraine, attributed to home regions. Source: https://200.zona.media
 
 ### Population denominator
 
