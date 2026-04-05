@@ -19,7 +19,10 @@ import pandas as pd
 from scipy import stats as sp_stats
 import warnings
 import os
-DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+DATA_DIR = os.path.join(ROOT_DIR, 'output')
+OUT = os.path.join(ROOT_DIR, 'output')
 warnings.filterwarnings('ignore')
 
 # ══════════════════════════════════════════════════════════════
@@ -36,11 +39,9 @@ plt.rcParams.update({
 RED = '#c0392b'; BLUE = '#2980b9'; DARK = '#2c3e50'; GRAY = '#95a5a6'
 GREEN = '#27ae60'; ORANGE = '#e67e22'; YELLOW = '#f1c40f'
 
-OUT = DATA_DIR + '/'
-
-df = pd.read_csv(f'{DATA_DIR}/full_panel.csv')
+df = pd.read_csv(os.path.join(DATA_DIR, 'full_panel.csv'))
 df = df[(df['year'] >= 2013) & (df['year'] <= 2024)].copy()
-dep_m = pd.read_csv(f'{OUT}/deposit_yoy_monthly.csv')
+dep_m = pd.read_csv(os.path.join(DATA_DIR, 'deposit_yoy_monthly.csv'))
 dep_m['date'] = pd.to_datetime(dep_m['date'])
 
 OIL = {'Ханты-Мансийский авт.округ - Югра', 'Ямало-Ненецкий авт.округ',
@@ -111,8 +112,8 @@ ax.set_ylabel('Change in HIV Detection Rate Among Pregnant Women (%)\n'
 ax.set_title('Supplementary Figure: Regional Military Burden and HIV Rate Change', fontsize=14)
 
 plt.tight_layout()
-plt.savefig(f'{OUT}/figS1_scatter.png', dpi=200, bbox_inches='tight')
-plt.savefig(f'{OUT}/figS1_scatter.pdf', bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'figS1_scatter.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'figS1_scatter.pdf'), bbox_inches='tight')
 plt.close()
 print("Supplementary Figure S1 done")
 
@@ -189,8 +190,8 @@ ax.set_xticklabels([str(y) if y != 2019 else '2019\n(base)'
 ax.set_xlim(2012.3, 2024.7)
 
 plt.tight_layout()
-plt.savefig(f'{OUT}/fig1_event_study.png', dpi=200, bbox_inches='tight')
-plt.savefig(f'{OUT}/fig1_event_study.pdf', bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig1_event_study.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig1_event_study.pdf'), bbox_inches='tight')
 plt.close()
 print("Figure 1 done")
 
@@ -252,8 +253,8 @@ ax.text(0.98, 0.15, '76 regions\n(gray lines)', transform=ax.transAxes,
         fontsize=9, ha='right', color=GRAY, style='italic')
 
 plt.tight_layout()
-plt.savefig(f'{OUT}/fig2_three_phases.png', dpi=200, bbox_inches='tight')
-plt.savefig(f'{OUT}/fig2_three_phases.pdf', bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig2_three_phases.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig2_three_phases.pdf'), bbox_inches='tight')
 plt.close()
 print("Figure 2 done")
 
@@ -317,8 +318,8 @@ ax.set_title('Figure 3: Treatment Window × Post-Period Matrix\n'
 ax.set_xlim(0.82, 1.42)
 
 plt.tight_layout()
-plt.savefig(f'{OUT}/fig3_forest_plot.png', dpi=200, bbox_inches='tight')
-plt.savefig(f'{OUT}/fig3_forest_plot.pdf', bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig3_forest_plot.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig3_forest_plot.pdf'), bbox_inches='tight')
 plt.close()
 print("Figure 3 done")
 
@@ -373,8 +374,8 @@ ax.text(0.03, 0.97,
                   boxstyle='round,pad=0.5'))
 
 plt.tight_layout()
-plt.savefig(f'{OUT}/fig4_mechanism.png', dpi=200, bbox_inches='tight')
-plt.savefig(f'{OUT}/fig4_mechanism.pdf', bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig4_mechanism.png'), dpi=200, bbox_inches='tight')
+plt.savefig(os.path.join(OUT, 'fig4_mechanism.pdf'), bbox_inches='tight')
 plt.close()
 print("Figure 4 done")
 

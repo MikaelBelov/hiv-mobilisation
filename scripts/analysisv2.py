@@ -79,10 +79,12 @@ def poisson_did(df_sub, pos_col, tested_col, treat_col, post_col='post'):
     X = pd.concat([sub[['treat_post']].reset_index(drop=True),
                     rd.reset_index(drop=True), yd.reset_index(drop=True)], axis=1)
     X = sm.add_constant(X)
+    col_names = list(X.columns)
     mod = sm.GLM(sub[pos_col].astype(float).values, X.astype(float).values,
                  family=sm.families.Poisson(), offset=sub['log_offset'].values)
     res = mod.fit(cov_type='cluster', cov_kwds={'groups': sub['region_id'].values}, maxiter=300)
-    b, se, p = res.params[1], res.bse[1], res.pvalues[1]
+    idx = col_names.index('treat_post')
+    b, se, p = res.params[idx], res.bse[idx], res.pvalues[idx]
     return dict(beta=b, se=se, p=p, irr=np.exp(b),
                 ci_lo=np.exp(b - 1.96 * se), ci_hi=np.exp(b + 1.96 * se),
                 n_reg=sub['region'].nunique())
@@ -145,6 +147,7 @@ pr("=" * 90)
 t1 = df_pref[df_pref['dose_std'].notna()].copy()
 t1['period'] = np.where(t1['year'] < 2022, 'Pre-war (2013–2021)', 'Post-war (2022–2024)')
 t1['c109_rate_calc'] = t1['c109_hiv_pos'] / t1['c109_tested'] * 100000
+t1['c102_rate_calc'] = t1['c102_hiv_pos'] / t1['c102_tested'] * 100000
 
 n_reg_t1 = t1['region'].nunique()
 
@@ -174,17 +177,44 @@ pr(f"  {'Max':<20} {dose_vals.max()*100:.1f}% ({dose_vals.idxmax()})")
 pr(f"  {'P25':<20} {dose_vals.quantile(0.25)*100:.1f}%")
 pr(f"  {'P75':<20} {dose_vals.quantile(0.75)*100:.1f}%")
 
-# Panel C: high vs low mobilisation
-pr(f"\n  Panel C: High vs low mobilisation (Q75 split)")
-for mob, label in [(1, 'High mobilisation (top 25%)'), (0, 'Low mobilisation (bottom 75%)')]:
-    sub_mob = t1[t1['high_mob'] == mob]
-    n_reg_mob = sub_mob['region'].nunique()
-    pre = sub_mob[sub_mob['period'] == 'Pre-war (2013–2021)']
-    post = sub_mob[sub_mob['period'] == 'Post-war (2022–2024)']
-    pr(f"  {label} — {n_reg_mob} regions")
-    pr(f"    Pre-war HIV rate:  mean = {pre['c109_rate_calc'].mean():.1f}, SD = {pre['c109_rate_calc'].std():.1f}")
-    pr(f"    Post-war HIV rate: mean = {post['c109_rate_calc'].mean():.1f}, SD = {post['c109_rate_calc'].std():.1f}")
-    pr(f"    Deposit growth:    mean = {dose_vals[dose_vals.index.isin(sub_mob['region'].unique())].mean()*100:.1f}%")
+# Panel C: Q4 vs Q1 mobilisation (Table 1 in paper)
+pr(f"\n  Panel C: High vs low mobilisation (Q4 vs Q1)")
+region_quartile = pd.qcut(dose_vals, 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
+regs_q1 = region_quartile[region_quartile == 'Q1'].index
+regs_q4 = region_quartile[region_quartile == 'Q4'].index
+all_regs = t1['region'].unique()
+
+pr(f"\n  {'':40} {'High mob (Q4)':>18} {'Low mob (Q1)':>18} {'All':>18}")
+pr("  " + "-" * 96)
+
+for var, label, fmt in [
+    ('dep_growth',       'Deposit growth, Oct 22–Jun 23 (%)', '.1f'),
+    ('c109_rate_calc',   'Pre-war HIV rate per 100K (c109)',   '.1f'),
+    ('c109_rate_post',   'Post-war HIV rate per 100K (c109)',  '.1f'),
+    ('c102_rate_calc',   'Pre-war IDU rate per 100K (c102)',   '.0f'),
+    ('c109_tested_pre',  'Mean tested per region per year',    '.0f'),
+]:
+    cells = []
+    for regs in [regs_q4, regs_q1, all_regs]:
+        sub_mob = t1[t1['region'].isin(regs)]
+        pre = sub_mob[sub_mob['period'] == 'Pre-war (2013–2021)']
+        post = sub_mob[sub_mob['period'] == 'Post-war (2022–2024)']
+        if var == 'dep_growth':
+            d = dose_vals[dose_vals.index.isin(regs)]
+            m, s = d.mean() * 100, d.std() * 100
+        elif var == 'c109_rate_post':
+            vals = post['c109_rate_calc'].dropna()
+            m, s = vals.mean(), vals.std()
+        elif var == 'c109_tested_pre':
+            vals = pre['c109_tested'].dropna()
+            m, s = vals.mean(), vals.std()
+        else:
+            vals = pre[var].dropna()
+            m, s = vals.mean(), vals.std()
+        cells.append(f"{m:{fmt}} ({s:{fmt}})")
+    pr(f"  {label:<40} {cells[0]:>18} {cells[1]:>18} {cells[2]:>18}")
+
+pr(f"\n  Q4: {len(regs_q4)} regions, Q1: {len(regs_q1)} regions")
 
 # ══════════════════════════════════════════════════════════════
 # 1. MAIN RESULT
@@ -313,8 +343,8 @@ pr(f"\n{'=' * 90}")
 pr("ROBUSTNESS: Sample Restrictions — c109, preferred treatment")
 pr("=" * 90)
 
-SAMPLES = {'Full (85)': set(), 'Excl oil&gas (80)': OIL_GAS,
-           'Excl capitals (83)': CAPITALS, 'Excl oil+caps (78)': OIL_GAS | CAPITALS}
+SAMPLES = {'Full (83)': set(), 'Excl oil&gas (78)': OIL_GAS,
+           'Excl capitals (81)': CAPITALS, 'Excl oil+caps (76)': OIL_GAS | CAPITALS}
 pr(f"\n  {'Sample':<25} {'β':>7} {'SE':>7} {'p':>8} {'':>4} {'IRR':>6} {'Nreg':>5}")
 pr("  " + "-" * 65)
 for sname, excl in SAMPLES.items():
