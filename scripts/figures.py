@@ -357,7 +357,7 @@ ax.axvline(x=1.0, color=DARK, linestyle='--', linewidth=1, alpha=0.5)
 ax.set_yticks(range(len(outcomes)))
 ax.set_yticklabels([o[0] for o in outcomes], fontsize=10)
 ax.set_xlabel('Incidence Rate Ratio (IRR)', fontsize=12)
-ax.set_title('Figure 4: Effect by Testing Category — Mechanism\n'
+ax.set_title('Figure 4: Effect by Testing Category\n'
              'Preferred Treatment, Preferred Sample', fontsize=13)
 ax.set_xlim(0.35, 1.95)
 
